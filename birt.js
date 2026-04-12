@@ -2,8 +2,38 @@ const canvas = document.getElementById("birthday");
 const ctx = canvas.getContext("2d");
 
 const PI2 = Math.PI * 2;
-const random = (min, max) => Math.random() * (max - min + 1) + min | 0;
-const timestamp = _ => new Date().getTime();
+const random = (min, max) => Math.random() * (max - min) + min;
+
+// 🔊 Base sounds (used only for cloning)
+const flyBase = new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_3b4a1bb8b3.mp3?filename=rocket-launch-1-122689.mp3');
+const burstBase = new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b1c77.mp3?filename=firework-explosion-1-122691.mp3');
+
+// 🔊 Sound control (prevents chaos)
+let lastLaunchTime = 0;
+let soundCooldown = 150; // ms
+
+function playFlySound() {
+  let now = Date.now();
+  if (now - lastLaunchTime < soundCooldown) return;
+
+  lastLaunchTime = now;
+
+  let sound = flyBase.cloneNode();
+  sound.volume = random(0.2, 0.5);
+  sound.play().catch(() => {});
+}
+
+function playBurstSound() {
+  let sound = burstBase.cloneNode();
+  sound.volume = random(0.6, 1);
+  sound.play().catch(() => {});
+}
+
+// 🔊 Unlock audio once
+document.body.addEventListener("click", () => {
+  flyBase.play().then(() => flyBase.pause()).catch(() => {});
+  burstBase.play().then(() => burstBase.pause()).catch(() => {});
+}, { once: true });
 
 class Firework {
   constructor(sx, sy, tx, ty, hue, offsprings) {
@@ -17,12 +47,14 @@ class Firework {
     this.offsprings = offsprings;
     this.dead = false;
 
+    // 🚀 play launch sound (controlled)
+    playFlySound();
+
     this.distanceToTarget = Math.hypot(tx - sx, ty - sy);
     this.distanceTraveled = 0;
 
     this.coordinates = [];
-    this.coordinateCount = 3;
-    while (this.coordinateCount--) this.coordinates.push([this.x, this.y]);
+    for (let i = 0; i < 3; i++) this.coordinates.push([this.x, this.y]);
 
     this.angle = Math.atan2(ty - sy, tx - sx);
     this.speed = 2;
@@ -30,7 +62,7 @@ class Firework {
     this.brightness = random(50, 70);
   }
 
-  update(index) {
+  update() {
     this.coordinates.pop();
     this.coordinates.unshift([this.x, this.y]);
 
@@ -38,12 +70,21 @@ class Firework {
 
     let vx = Math.cos(this.angle) * this.speed;
     let vy = Math.sin(this.angle) * this.speed;
-    this.distanceTraveled = Math.hypot(this.x + vx - this.sx, this.y + vy - this.sy);
+
+    this.distanceTraveled = Math.hypot(
+      this.x + vx - this.sx,
+      this.y + vy - this.sy
+    );
 
     if (this.distanceTraveled >= this.distanceToTarget) {
+
+      // 💥 explosion sound
+      playBurstSound();
+
       for (let i = 0; i < this.offsprings; i++) {
         birthday.fireworks.push(new Particle(this.tx, this.ty, this.hue));
       }
+
       this.dead = true;
     } else {
       this.x += vx;
@@ -64,30 +105,34 @@ class Particle {
   constructor(x, y, hue) {
     this.x = x;
     this.y = y;
+
     this.coordinates = [];
-    this.coordinateCount = 5;
-    while (this.coordinateCount--) this.coordinates.push([this.x, this.y]);
+    for (let i = 0; i < 5; i++) this.coordinates.push([this.x, this.y]);
 
     this.angle = random(0, PI2);
-    this.speed = random(1, 10);
+    this.speed = random(2, 8);
     this.friction = 0.95;
-    this.gravity = 1;
+    this.gravity = 0.8;
+
     this.hue = hue;
     this.brightness = random(50, 80);
+
     this.alpha = 1;
     this.decay = random(0.015, 0.03);
   }
 
-  update(index) {
+  update() {
     this.coordinates.pop();
     this.coordinates.unshift([this.x, this.y]);
 
     this.speed *= this.friction;
+
     this.x += Math.cos(this.angle) * this.speed;
     this.y += Math.sin(this.angle) * this.speed + this.gravity;
+
     this.alpha -= this.decay;
 
-    if (this.alpha <= this.decay) this.dead = true;
+    if (this.alpha <= 0) this.dead = true;
   }
 
   draw() {
@@ -114,20 +159,22 @@ class Birthday {
 
   resize() {
     this.width = canvas.width = window.innerWidth;
-    let center = this.width / 2 | 0;
-    this.spawnA = center - center / 4 | 0;
-    this.spawnB = center + center / 4 | 0;
+
+    let center = this.width / 2;
+    this.spawnA = center - center / 4;
+    this.spawnB = center + center / 4;
 
     this.height = canvas.height = window.innerHeight;
-    this.spawnC = this.height * .1;
-    this.spawnD = this.height * .5;
+    this.spawnC = this.height * 0.1;
+    this.spawnD = this.height * 0.5;
   }
 
   onClick(evt) {
     let x = evt.clientX || evt.touches[0].pageX;
     let y = evt.clientY || evt.touches[0].pageY;
 
-    let count = random(3, 5);
+    let count = random(3, 6);
+
     for (let i = 0; i < count; i++) {
       this.fireworks.push(new Firework(
         random(this.spawnA, this.spawnB),
@@ -135,26 +182,26 @@ class Birthday {
         x,
         y,
         random(0, 360),
-        random(30, 110)
+        random(40, 100)
       ));
     }
   }
 
   update() {
-    let i = this.fireworks.length;
-    while (i--) {
-      this.fireworks[i].update(i);
+    for (let i = this.fireworks.length - 1; i >= 0; i--) {
+      this.fireworks[i].update();
       if (this.fireworks[i].dead) this.fireworks.splice(i, 1);
     }
 
-    if (this.counter++ >= 30) {
+    // 🎆 smoother auto fireworks (less spam, more natural)
+    if (this.counter++ >= 50) {
       this.fireworks.push(new Firework(
         random(this.spawnA, this.spawnB),
         this.height,
         random(0, this.width),
         random(this.spawnC, this.spawnD),
         random(0, 360),
-        random(30, 110)
+        random(40, 100)
       ));
       this.counter = 0;
     }
@@ -167,9 +214,7 @@ class Birthday {
 
     ctx.globalCompositeOperation = "lighter";
 
-    this.fireworks.forEach(f => {
-      f.draw();
-    });
+    this.fireworks.forEach(f => f.draw());
   }
 
   loop() {
