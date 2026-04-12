@@ -4,20 +4,18 @@ const ctx = canvas.getContext("2d");
 const PI2 = Math.PI * 2;
 const random = (min, max) => Math.random() * (max - min) + min;
 
-// 🔊 Base sounds (used only for cloning)
-const flyBase = new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_3b4a1bb8b3.mp3?filename=rocket-launch-1-122689.mp3');
-const burstBase = new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b1c77.mp3?filename=firework-explosion-1-122691.mp3');
+// ✅ WORKING AUDIO (no corruption, no 403)
+const flyBase = new Audio("https://cdn.freesound.org/previews/341/341695_3248244-lq.mp3");
+const burstBase = new Audio("https://cdn.freesound.org/previews/276/276020_5123851-lq.mp3");
 
-// 🔊 Sound control (prevents chaos)
-let lastLaunchTime = 0;
-let soundCooldown = 150; // ms
+// 🔓 Unlock audio once
+document.body.addEventListener("click", () => {
+  flyBase.play().then(() => flyBase.pause()).catch(() => {});
+  burstBase.play().then(() => burstBase.pause()).catch(() => {});
+}, { once: true });
 
+// 🔊 Sound helpers
 function playFlySound() {
-  let now = Date.now();
-  if (now - lastLaunchTime < soundCooldown) return;
-
-  lastLaunchTime = now;
-
   let sound = flyBase.cloneNode();
   sound.volume = random(0.2, 0.5);
   sound.play().catch(() => {});
@@ -28,12 +26,6 @@ function playBurstSound() {
   sound.volume = random(0.6, 1);
   sound.play().catch(() => {});
 }
-
-// 🔊 Unlock audio once
-document.body.addEventListener("click", () => {
-  flyBase.play().then(() => flyBase.pause()).catch(() => {});
-  burstBase.play().then(() => burstBase.pause()).catch(() => {});
-}, { once: true });
 
 class Firework {
   constructor(sx, sy, tx, ty, hue, offsprings) {
@@ -47,7 +39,6 @@ class Firework {
     this.offsprings = offsprings;
     this.dead = false;
 
-    // 🚀 play launch sound (controlled)
     playFlySound();
 
     this.distanceToTarget = Math.hypot(tx - sx, ty - sy);
@@ -77,8 +68,6 @@ class Firework {
     );
 
     if (this.distanceTraveled >= this.distanceToTarget) {
-
-      // 💥 explosion sound
       playBurstSound();
 
       for (let i = 0; i < this.offsprings; i++) {
@@ -193,7 +182,6 @@ class Birthday {
       if (this.fireworks[i].dead) this.fireworks.splice(i, 1);
     }
 
-    // 🎆 smoother auto fireworks (less spam, more natural)
     if (this.counter++ >= 50) {
       this.fireworks.push(new Firework(
         random(this.spawnA, this.spawnB),
