@@ -1,8 +1,6 @@
 body {
   margin: 0;
   cursor: crosshair;
-
-  /* 🌌 gradient background */
   background: radial-gradient(circle at center, #0a0a0a, #020202 70%);
 }
 
@@ -15,18 +13,19 @@ h1 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  
   color: #fff;
   font-family: "Verdana";
-  font-size: 5em;
+  font-size: 4.5em;
   font-weight: 900;
-  user-select: none;
   text-align: center;
 
-  /* ✨ glowing text */
   text-shadow: 
-    0 0 10px #fff,
-    0 0 20px #ff00ff,
-    0 0 40px #a020f0;
+    0 0 4px #fff,
+    0 0 8px #a020f0;
+
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .name {
@@ -34,9 +33,7 @@ h1 {
   color: #a020f0;
   font-size: 1.2em;
 
-  text-shadow: 
-    0 0 10px #a020f0,
-    0 0 20px #ff66ff;
+  text-shadow: 0 0 6px #a020f0;
 }
 
 .hint {
