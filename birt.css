@@ -1,8 +1,9 @@
-
 body {
   margin: 0;
-  background: #020202;
   cursor: crosshair;
+
+  /* 🌌 gradient background */
+  background: radial-gradient(circle at center, #0a0a0a, #020202 70%);
 }
 
 canvas {
@@ -20,9 +21,31 @@ h1 {
   font-weight: 900;
   user-select: none;
   text-align: center;
+
+  /* ✨ glowing text */
+  text-shadow: 
+    0 0 10px #fff,
+    0 0 20px #ff00ff,
+    0 0 40px #a020f0;
 }
+
 .name {
   font-family: "Brush Script MT", cursive;
   color: #a020f0;
   font-size: 1.2em;
+
+  text-shadow: 
+    0 0 10px #a020f0,
+    0 0 20px #ff66ff;
+}
+
+.hint {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  color: #aaa;
+  font-family: Verdana;
+  font-size: 1em;
+  opacity: 0.7;
 }
