@@ -4,26 +4,18 @@ const ctx = canvas.getContext("2d");
 const PI2 = Math.PI * 2;
 const random = (min, max) => Math.random() * (max - min) + min;
 
-// ✅ WORKING AUDIO (no corruption, no 403)
-const flyBase = new Audio("https://cdn.freesound.org/previews/341/341695_3248244-lq.mp3");
-const burstBase = new Audio("https://cdn.freesound.org/previews/276/276020_5123851-lq.mp3");
+// 🔊 simple embedded burst sound (no external dependency)
+const burstBase = new Audio("data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YS4AAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg");
 
-// 🔓 Unlock audio once
+// unlock audio
 document.body.addEventListener("click", () => {
-  flyBase.play().then(() => flyBase.pause()).catch(() => {});
-  burstBase.play().then(() => burstBase.pause()).catch(() => {});
+  burstBase.play().then(() => burstBase.pause()).catch(()=>{});
 }, { once: true });
 
-// 🔊 Sound helpers
-function playFlySound() {
-  let sound = flyBase.cloneNode();
-  sound.volume = random(0.2, 0.5);
-  sound.play().catch(() => {});
-}
-
+// play burst sound
 function playBurstSound() {
   let sound = burstBase.cloneNode();
-  sound.volume = random(0.6, 1);
+  sound.volume = random(0.5, 1);
   sound.play().catch(() => {});
 }
 
@@ -39,8 +31,6 @@ class Firework {
     this.offsprings = offsprings;
     this.dead = false;
 
-    playFlySound();
-
     this.distanceToTarget = Math.hypot(tx - sx, ty - sy);
     this.distanceTraveled = 0;
 
@@ -48,8 +38,8 @@ class Firework {
     for (let i = 0; i < 3; i++) this.coordinates.push([this.x, this.y]);
 
     this.angle = Math.atan2(ty - sy, tx - sx);
-    this.speed = 2;
-    this.acceleration = 1.05;
+    this.speed = 3; // 🔥 faster
+    this.acceleration = 1.08; // 🔥 faster reach
     this.brightness = random(50, 70);
   }
 
@@ -68,6 +58,8 @@ class Firework {
     );
 
     if (this.distanceTraveled >= this.distanceToTarget) {
+
+      // 💥 play sound ONLY here
       playBurstSound();
 
       for (let i = 0; i < this.offsprings; i++) {
@@ -137,7 +129,6 @@ class Birthday {
   constructor() {
     this.resize();
     this.fireworks = [];
-    this.counter = 0;
 
     window.addEventListener("resize", () => this.resize());
     canvas.addEventListener("click", e => this.onClick(e));
@@ -148,30 +139,24 @@ class Birthday {
 
   resize() {
     this.width = canvas.width = window.innerWidth;
-
-    let center = this.width / 2;
-    this.spawnA = center - center / 4;
-    this.spawnB = center + center / 4;
-
     this.height = canvas.height = window.innerHeight;
-    this.spawnC = this.height * 0.1;
-    this.spawnD = this.height * 0.5;
   }
 
   onClick(evt) {
     let x = evt.clientX || evt.touches[0].pageX;
     let y = evt.clientY || evt.touches[0].pageY;
 
-    let count = random(3, 6);
+    // 🔥 MORE fireworks instantly
+    let count = random(6, 10);
 
     for (let i = 0; i < count; i++) {
       this.fireworks.push(new Firework(
-        random(this.spawnA, this.spawnB),
+        this.width / 2,
         this.height,
         x,
         y,
         random(0, 360),
-        random(40, 100)
+        random(50, 120)
       ));
     }
   }
@@ -181,23 +166,11 @@ class Birthday {
       this.fireworks[i].update();
       if (this.fireworks[i].dead) this.fireworks.splice(i, 1);
     }
-
-    if (this.counter++ >= 50) {
-      this.fireworks.push(new Firework(
-        random(this.spawnA, this.spawnB),
-        this.height,
-        random(0, this.width),
-        random(this.spawnC, this.spawnD),
-        random(0, 360),
-        random(40, 100)
-      ));
-      this.counter = 0;
-    }
   }
 
   draw() {
     ctx.globalCompositeOperation = "destination-out";
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
     ctx.fillRect(0, 0, this.width, this.height);
 
     ctx.globalCompositeOperation = "lighter";
