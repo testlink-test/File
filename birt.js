@@ -142,7 +142,7 @@ class Birthday {
 
   update() {
     // 🔥 FAST AUTO FIRE (every few frames)
-    if (Math.random() < 0.25) {   // increase for more fireworks
+    if (Math.random() < 0.15) {   // increase for more fireworks
       let x = random(50, this.width - 50);
       let y = random(50, this.height * 0.5);
 
