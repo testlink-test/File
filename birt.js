@@ -122,7 +122,7 @@ class Birthday {
 
   update() {
     // 🔥 Auto fireworks
-    if (Math.random() < 0.3) {
+    if (Math.random() < 0.11) {
       let x = random(50, this.width - 50);
       let y = random(50, this.height * 0.5);
 
