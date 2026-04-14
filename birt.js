@@ -4,16 +4,23 @@ const ctx = canvas.getContext("2d");
 const PI2 = Math.PI * 2;
 const random = (min, max) => Math.random() * (max - min) + min;
 
-// 🔊 simple embedded burst sound (no external dependency)
-const burstBase = new Audio("data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YS4AAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg");
+// 🔊 Embedded burst sound (works everywhere)
+const burstBase = new Audio("data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YS4AAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg");
 
-// unlock audio
+// 🔓 Enable sound on first click anywhere
+let soundEnabled = false;
+
 document.body.addEventListener("click", () => {
-  burstBase.play().then(() => burstBase.pause()).catch(()=>{});
+  burstBase.play().then(() => {
+    burstBase.pause();
+    soundEnabled = true;
+  }).catch(() => {});
 }, { once: true });
 
-// play burst sound
+// 🔊 Play burst sound
 function playBurstSound() {
+  if (!soundEnabled) return;
+
   let sound = burstBase.cloneNode();
   sound.volume = random(0.5, 1);
   sound.play().catch(() => {});
@@ -38,8 +45,8 @@ class Firework {
     for (let i = 0; i < 3; i++) this.coordinates.push([this.x, this.y]);
 
     this.angle = Math.atan2(ty - sy, tx - sx);
-    this.speed = 3; // 🔥 faster
-    this.acceleration = 1.08; // 🔥 faster reach
+    this.speed = 3;
+    this.acceleration = 1.08;
     this.brightness = random(50, 70);
   }
 
@@ -59,7 +66,7 @@ class Firework {
 
     if (this.distanceTraveled >= this.distanceToTarget) {
 
-      // 💥 play sound ONLY here
+      // 💥 Explosion sound
       playBurstSound();
 
       for (let i = 0; i < this.offsprings; i++) {
@@ -141,12 +148,12 @@ class Birthday {
   }
 
   update() {
-    // 🔥 FAST AUTO FIRE (every few frames)
-    if (Math.random() < 0.1) {   // increase for more fireworks
+    // 🔥 AUTO FIRE (fast, no delay)
+    if (Math.random() < 0.3) {
       let x = random(50, this.width - 50);
       let y = random(50, this.height * 0.5);
 
-      let count = random(3, 6);
+      let count = random(4, 8);
 
       for (let i = 0; i < count; i++) {
         this.fireworks.push(new Firework(
@@ -155,12 +162,11 @@ class Birthday {
           x,
           y,
           random(0, 360),
-          random(40, 100)
+          random(50, 120)
         ));
       }
     }
 
-    // update fireworks
     for (let i = this.fireworks.length - 1; i >= 0; i--) {
       this.fireworks[i].update();
       if (this.fireworks[i].dead) this.fireworks.splice(i, 1);
@@ -183,4 +189,5 @@ class Birthday {
     this.draw();
   }
 }
+
 const birthday = new Birthday();
