@@ -4,26 +4,40 @@ const ctx = canvas.getContext("2d");
 const PI2 = Math.PI * 2;
 const random = (min, max) => Math.random() * (max - min) + min;
 
-// 🔊 Embedded burst sound (works everywhere)
-const burstBase = new Audio("data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YS4AAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg");
-
-// 🔓 Enable sound on first click anywhere
+// 🔊 Web Audio setup
+let audioCtx = null;
 let soundEnabled = false;
 
+// 👆 Enable sound on first click anywhere
 document.body.addEventListener("click", () => {
-  burstBase.play().then(() => {
-    burstBase.pause();
-    soundEnabled = true;
-  }).catch(() => {});
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  soundEnabled = true;
 }, { once: true });
 
-// 🔊 Play burst sound
+// 💥 REAL explosion sound (no files needed)
 function playBurstSound() {
-  if (!soundEnabled) return;
+  if (!soundEnabled || !audioCtx) return;
 
-  let sound = burstBase.cloneNode();
-  sound.volume = random(0.5, 1);
-  sound.play().catch(() => {});
+  const bufferSize = audioCtx.sampleRate * 0.2; // short burst
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  // create noise (crack sound)
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+  }
+
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+  noise.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  noise.start();
 }
 
 class Firework {
@@ -66,7 +80,7 @@ class Firework {
 
     if (this.distanceTraveled >= this.distanceToTarget) {
 
-      // 💥 Explosion sound
+      // 💥 PLAY SOUND HERE
       playBurstSound();
 
       for (let i = 0; i < this.offsprings; i++) {
@@ -148,7 +162,7 @@ class Birthday {
   }
 
   update() {
-    // 🔥 AUTO FIRE (fast, no delay)
+    // 🔥 AUTO FIRE (fast)
     if (Math.random() < 0.3) {
       let x = random(50, this.width - 50);
       let y = random(50, this.height * 0.5);
