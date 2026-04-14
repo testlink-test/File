@@ -131,8 +131,6 @@ class Birthday {
     this.fireworks = [];
 
     window.addEventListener("resize", () => this.resize());
-    canvas.addEventListener("click", e => this.onClick(e));
-    canvas.addEventListener("touchstart", e => this.onClick(e));
 
     this.loop();
   }
@@ -142,26 +140,27 @@ class Birthday {
     this.height = canvas.height = window.innerHeight;
   }
 
-  onClick(evt) {
-    let x = evt.clientX || evt.touches[0].pageX;
-    let y = evt.clientY || evt.touches[0].pageY;
-
-    // 🔥 MORE fireworks instantly
-    let count = random(6, 10);
-
-    for (let i = 0; i < count; i++) {
-      this.fireworks.push(new Firework(
-        this.width / 2,
-        this.height,
-        x,
-        y,
-        random(0, 360),
-        random(50, 120)
-      ));
-    }
-  }
-
   update() {
+    // 🔥 FAST AUTO FIRE (every few frames)
+    if (Math.random() < 0.25) {   // increase for more fireworks
+      let x = random(50, this.width - 50);
+      let y = random(50, this.height * 0.5);
+
+      let count = random(3, 6);
+
+      for (let i = 0; i < count; i++) {
+        this.fireworks.push(new Firework(
+          this.width / 2,
+          this.height,
+          x,
+          y,
+          random(0, 360),
+          random(40, 100)
+        ));
+      }
+    }
+
+    // update fireworks
     for (let i = this.fireworks.length - 1; i >= 0; i--) {
       this.fireworks[i].update();
       if (this.fireworks[i].dead) this.fireworks.splice(i, 1);
@@ -184,5 +183,4 @@ class Birthday {
     this.draw();
   }
 }
-
 const birthday = new Birthday();
