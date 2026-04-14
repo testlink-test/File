@@ -4,64 +4,6 @@ const ctx = canvas.getContext("2d");
 const PI2 = Math.PI * 2;
 const random = (min, max) => Math.random() * (max - min) + min;
 
-// 🔊 Web Audio setup
-let audioCtx = null;
-let soundEnabled = false;
-
-// 👆 Enable sound on first click anywhere
-document.body.addEventListener("click", () => {
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  soundEnabled = true;
-}, { once: true });
-
-function playBurstSound() {
-  if (!soundEnabled || !audioCtx) return;
-
-  const delay = Math.random() * 0.2 + 0.1; // ⏱️ delay (distance effect)
-  const now = audioCtx.currentTime + delay;
-
-  // 🌫️ VERY soft airy base
-  const bufferSize = audioCtx.sampleRate * 0.4;
-  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const data = buffer.getChannelData(0);
-
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * 0.08 * Math.pow(1 - i / bufferSize, 4);
-  }
-
-  const noise = audioCtx.createBufferSource();
-  noise.buffer = buffer;
-
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(900, now); // 🔇 remove harshness
-
-  const gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(0.08, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-
-  noise.connect(filter).connect(gain).connect(audioCtx.destination);
-  noise.start(now);
-
-  // ✨ faint sparkle layer
-  for (let i = 0; i < 3; i++) {
-    const osc = audioCtx.createOscillator();
-    osc.type = "sine";
-
-    const freq = 1200 + Math.random() * 800;
-    osc.frequency.setValueAtTime(freq, now);
-
-    const g = audioCtx.createGain();
-    g.gain.setValueAtTime(0.02, now);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-
-    osc.connect(g).connect(audioCtx.destination);
-
-    const t = now + Math.random() * 0.15;
-    osc.start(t);
-    osc.stop(t + 0.25);
-  }
-}
 class Firework {
   constructor(sx, sy, tx, ty, hue, offsprings) {
     this.x = sx;
@@ -101,14 +43,9 @@ class Firework {
     );
 
     if (this.distanceTraveled >= this.distanceToTarget) {
-
-      // 💥 PLAY SOUND HERE
-      playBurstSound();
-
       for (let i = 0; i < this.offsprings; i++) {
         birthday.fireworks.push(new Particle(this.tx, this.ty, this.hue));
       }
-
       this.dead = true;
     } else {
       this.x += vx;
@@ -184,7 +121,7 @@ class Birthday {
   }
 
   update() {
-    // 🔥 AUTO FIRE (fast)
+    // 🔥 Auto fireworks
     if (Math.random() < 0.3) {
       let x = random(50, this.width - 50);
       let y = random(50, this.height * 0.5);
