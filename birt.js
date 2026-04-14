@@ -14,54 +14,52 @@ document.body.addEventListener("click", () => {
   soundEnabled = true;
 }, { once: true });
 
-// 💥 REAL explosion sound (no files needed)
 function playBurstSound() {
   if (!soundEnabled || !audioCtx) return;
 
-  const now = audioCtx.currentTime;
+  const delay = Math.random() * 0.2 + 0.1; // ⏱️ delay (distance effect)
+  const now = audioCtx.currentTime + delay;
 
-  // 🌫️ 1. Very soft airy noise (distant feel)
-  const bufferSize = audioCtx.sampleRate * 0.5;
+  // 🌫️ VERY soft airy base
+  const bufferSize = audioCtx.sampleRate * 0.4;
   const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
   const data = buffer.getChannelData(0);
 
   for (let i = 0; i < bufferSize; i++) {
-    // very soft + slow decay
-    data[i] = (Math.random() * 2 - 1) * 0.2 * Math.pow(1 - i / bufferSize, 4);
+    data[i] = (Math.random() * 2 - 1) * 0.08 * Math.pow(1 - i / bufferSize, 4);
   }
 
   const noise = audioCtx.createBufferSource();
   noise.buffer = buffer;
 
   const filter = audioCtx.createBiquadFilter();
-  filter.type = "bandpass";
-  filter.frequency.setValueAtTime(1500, now); // mid airy tone
-  filter.Q.value = 0.5;
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(900, now); // 🔇 remove harshness
 
   const gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(0.15, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+  gain.gain.setValueAtTime(0.08, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
 
   noise.connect(filter).connect(gain).connect(audioCtx.destination);
   noise.start(now);
 
-  // ✨ 2. Light sparkle (very subtle, random delays)
-  for (let i = 0; i < 6; i++) {
-    const spark = audioCtx.createOscillator();
-    spark.type = "sine";
+  // ✨ faint sparkle layer
+  for (let i = 0; i < 3; i++) {
+    const osc = audioCtx.createOscillator();
+    osc.type = "sine";
 
-    const freq = 1000 + Math.random() * 1500; // soft high tones
-    spark.frequency.setValueAtTime(freq, now);
+    const freq = 1200 + Math.random() * 800;
+    osc.frequency.setValueAtTime(freq, now);
 
-    const sparkGain = audioCtx.createGain();
-    sparkGain.gain.setValueAtTime(0.05, now);
-    sparkGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0.02, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
-    spark.connect(sparkGain).connect(audioCtx.destination);
+    osc.connect(g).connect(audioCtx.destination);
 
-    const delay = Math.random() * 0.2; // scattered sparkle
-    spark.start(now + delay);
-    spark.stop(now + delay + 0.3);
+    const t = now + Math.random() * 0.15;
+    osc.start(t);
+    osc.stop(t + 0.25);
   }
 }
 class Firework {
