@@ -20,45 +20,48 @@ function playBurstSound() {
 
   const now = audioCtx.currentTime;
 
-  // 🌊 1. Soft airy burst (filtered noise)
-  const bufferSize = audioCtx.sampleRate * 0.4;
+  // 🌫️ 1. Very soft airy noise (distant feel)
+  const bufferSize = audioCtx.sampleRate * 0.5;
   const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
   const data = buffer.getChannelData(0);
 
   for (let i = 0; i < bufferSize; i++) {
-    // smooth fade-out curve
-    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+    // very soft + slow decay
+    data[i] = (Math.random() * 2 - 1) * 0.2 * Math.pow(1 - i / bufferSize, 4);
   }
 
   const noise = audioCtx.createBufferSource();
   noise.buffer = buffer;
 
   const filter = audioCtx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(1200, now); // removes harsh highs
+  filter.type = "bandpass";
+  filter.frequency.setValueAtTime(1500, now); // mid airy tone
+  filter.Q.value = 0.5;
 
-  const noiseGain = audioCtx.createGain();
-  noiseGain.gain.setValueAtTime(0.4, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.15, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
 
-  noise.connect(filter).connect(noiseGain).connect(audioCtx.destination);
+  noise.connect(filter).connect(gain).connect(audioCtx.destination);
   noise.start(now);
 
-  // ✨ 2. Gentle sparkle tones
-  for (let i = 0; i < 4; i++) {
+  // ✨ 2. Light sparkle (very subtle, random delays)
+  for (let i = 0; i < 6; i++) {
     const spark = audioCtx.createOscillator();
     spark.type = "sine";
 
-    const freq = 600 + Math.random() * 1200;
+    const freq = 1000 + Math.random() * 1500; // soft high tones
     spark.frequency.setValueAtTime(freq, now);
 
-    const gain = audioCtx.createGain();
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    const sparkGain = audioCtx.createGain();
+    sparkGain.gain.setValueAtTime(0.05, now);
+    sparkGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
 
-    spark.connect(gain).connect(audioCtx.destination);
-    spark.start(now + Math.random() * 0.05);
-    spark.stop(now + 0.3);
+    spark.connect(sparkGain).connect(audioCtx.destination);
+
+    const delay = Math.random() * 0.2; // scattered sparkle
+    spark.start(now + delay);
+    spark.stop(now + delay + 0.3);
   }
 }
 class Firework {
