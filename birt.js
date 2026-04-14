@@ -18,28 +18,49 @@ document.body.addEventListener("click", () => {
 function playBurstSound() {
   if (!soundEnabled || !audioCtx) return;
 
-  const bufferSize = audioCtx.sampleRate * 0.2; // short burst
+  const now = audioCtx.currentTime;
+
+  // 🌊 1. Soft airy burst (filtered noise)
+  const bufferSize = audioCtx.sampleRate * 0.4;
   const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
   const data = buffer.getChannelData(0);
 
-  // create noise (crack sound)
   for (let i = 0; i < bufferSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    // smooth fade-out curve
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
   }
 
   const noise = audioCtx.createBufferSource();
   noise.buffer = buffer;
 
-  const gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(1, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(1200, now); // removes harsh highs
 
-  noise.connect(gain);
-  gain.connect(audioCtx.destination);
+  const noiseGain = audioCtx.createGain();
+  noiseGain.gain.setValueAtTime(0.4, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
 
-  noise.start();
+  noise.connect(filter).connect(noiseGain).connect(audioCtx.destination);
+  noise.start(now);
+
+  // ✨ 2. Gentle sparkle tones
+  for (let i = 0; i < 4; i++) {
+    const spark = audioCtx.createOscillator();
+    spark.type = "sine";
+
+    const freq = 600 + Math.random() * 1200;
+    spark.frequency.setValueAtTime(freq, now);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+    spark.connect(gain).connect(audioCtx.destination);
+    spark.start(now + Math.random() * 0.05);
+    spark.stop(now + 0.3);
+  }
 }
-
 class Firework {
   constructor(sx, sy, tx, ty, hue, offsprings) {
     this.x = sx;
