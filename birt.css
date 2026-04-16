@@ -1,3 +1,8 @@
+@font-face {
+  font-family: 'BrushScript';
+  src: url('BrushScriptOpti-Regular.otf') format('opentype');
+}
+
 body {
   margin: 0;
   background: #020202;
@@ -21,7 +26,7 @@ h2 {
   text-align: center;
 }
 .name {
-  font-family: "Brush Script MT", cursive;
+  font-family: 'BrushScript';
   color: #a020f0;
   font-size: 1.2em;
 }
